@@ -5,11 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SISPonto - Polícia Rio Rise</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #090d16; color: #f1f5f9; }
     .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.6); }
     .gold-badge { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+    /* Oculta selo flutuante injetado pelo Netlify */
+    a[href*="netlify.com"],
+    div[class*="netlify"],
+    iframe[src*="netlify"],
+    #netlify-badge {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
@@ -40,7 +50,7 @@
   </header>
 
   <!-- CONTEÚDO PRINCIPAL -->
-  <main class="flex-1 max-w-6xl w-full mx-auto p-4 space-y-6">
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 pb-24 space-y-6">
 
     <!-- ALERTA GLOBAL -->
     <div id="alerta-global" class="hidden rounded-xl p-4 text-sm font-medium border"></div>
@@ -78,6 +88,10 @@
           <input type="text" id="cad-nick" required placeholder="Ex: Dom_Alcapone" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
         </div>
         <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Quem fez o seu recrutamento?</label>
+          <input type="text" id="cad-recrutador" required placeholder="Nick do responsável pelo recrutamento" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
           <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">E-mail</label>
           <input type="email" id="cad-email" required placeholder="seuemail@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
         </div>
@@ -98,14 +112,14 @@
         </div>
         <div>
           <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Horário Fixo de Patrulha</label>
-          <select id="cad-turno" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400">
+          <select id="cad-turno" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400 disabled:opacity-50 disabled:cursor-not-allowed">
+            <option value="" id="opt-turno-vazio" class="hidden">Não obrigatório para Comandante Geral</option>
             <option value="08-12">08h às 12h</option>
             <option value="13-16">13h às 16h</option>
             <option value="16-20">16h às 20h</option>
             <option value="20-00">20h às 00h</option>
-            <option value="LIVRE" id="opt-turno-livre" class="hidden">Livre (Todos os Turnos)</option>
           </select>
-          <p id="aviso-comandante" class="hidden text-[11px] text-amber-400 mt-1 font-medium">Comandante Geral possui acesso livre a todos os turnos sem restrição de horário.</p>
+          <p id="aviso-comandante" class="hidden text-[11px] text-amber-400 mt-1 font-medium">A seleção de horário está bloqueada e não é obrigatória para o Comandante Geral.</p>
         </div>
         <button type="submit" id="btn-submit-cadastro" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg shadow-lg transition text-sm">
           Enviar Cadastro para Aprovação
@@ -187,7 +201,7 @@
 
             <!-- SELETOR DE ÁLBUM APENAS SE COMANDANTE GERAL ENTRAR EM HORÁRIO BLOQUEADO -->
             <div id="box-album-comandante" class="hidden bg-slate-900 border border-slate-700 rounded-xl p-3.5">
-              <label class="block text-xs font-semibold uppercase text-amber-400 mb-1">Álbum de Destino (Horário Livre Comando)</label>
+              <label class="block text-xs font-semibold uppercase text-amber-400 mb-1">Álbum de Destino (Comandante Geral)</label>
               <select id="select-album-comandante" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs">
                 <option value="08-12">Álbum 08h às 12h</option>
                 <option value="13-16">Álbum 13h às 16h</option>
@@ -360,6 +374,7 @@
               <thead>
                 <tr class="border-b border-slate-800 text-slate-400 uppercase">
                   <th class="py-3 px-2">Nick</th>
+                  <th class="py-3 px-2">Recrutado por</th>
                   <th class="py-3 px-2">E-mail</th>
                   <th class="py-3 px-2">Cargo (Editável)</th>
                   <th class="py-3 px-2">Turno Fixo (Editável)</th>
@@ -479,8 +494,7 @@
       "08-12": "08h às 12h",
       "13-16": "13h às 16h",
       "16-20": "16h às 20h",
-      "20-00": "20h às 00h",
-      "LIVRE": "Livre (Todos os Turnos)"
+      "20-00": "20h às 00h"
     };
 
     const EMAIL_MESTRE = "georgemarciojr@gmail.com";
@@ -578,18 +592,20 @@
     window.verificarRegraCargoCadastro = () => {
       const cargo = document.getElementById("cad-cargo").value;
       const selectTurno = document.getElementById("cad-turno");
-      const optLivre = document.getElementById("opt-turno-livre");
+      const optVazio = document.getElementById("opt-turno-vazio");
       const aviso = document.getElementById("aviso-comandante");
 
       if (cargo === "Comandante Geral") {
-        optLivre.classList.remove("hidden");
-        selectTurno.value = "LIVRE";
+        optVazio.classList.remove("hidden");
+        selectTurno.value = "";
+        selectTurno.required = false;
         selectTurno.disabled = true;
         aviso.classList.remove("hidden");
       } else {
-        optLivre.classList.add("hidden");
+        optVazio.classList.add("hidden");
         selectTurno.disabled = false;
-        if (selectTurno.value === "LIVRE") selectTurno.value = "08-12";
+        selectTurno.required = true;
+        if (!selectTurno.value) selectTurno.value = "08-12";
         aviso.classList.add("hidden");
       }
     };
@@ -606,13 +622,13 @@
       try {
         await signInWithEmailAndPassword(auth, email, senha);
       } catch (err) {
-        // Se for o primeiro login do Delegado Mestre Dom_Alcapone, cria e aprova automaticamente
         if (email === EMAIL_MESTRE) {
           try {
             const cred = await createUserWithEmailAndPassword(auth, email, senha);
             await setDoc(doc(db, "usuarios", cred.user.uid), {
               uid: cred.user.uid,
               nick: "Dom_Alcapone",
+              recrutador: "Comando",
               email: EMAIL_MESTRE,
               cargo: "Delegado",
               turnoFixo: "20-00",
@@ -636,10 +652,11 @@
     window.fazerCadastro = async (e) => {
       e.preventDefault();
       const nick = document.getElementById("cad-nick").value.trim();
+      const recrutador = document.getElementById("cad-recrutador").value.trim();
       const email = document.getElementById("cad-email").value.trim().toLowerCase();
       const senha = document.getElementById("cad-senha").value;
       const cargo = document.getElementById("cad-cargo").value;
-      const turnoFixo = cargo === "Comandante Geral" ? "LIVRE" : document.getElementById("cad-turno").value;
+      const turnoFixo = cargo === "Comandante Geral" ? "" : document.getElementById("cad-turno").value;
       const btn = document.getElementById("btn-submit-cadastro");
 
       btn.disabled = true;
@@ -651,6 +668,7 @@
         await setDoc(doc(db, "usuarios", cred.user.uid), {
           uid: cred.user.uid,
           nick: isMestre ? "Dom_Alcapone" : nick,
+          recrutador: isMestre ? "Comando" : recrutador,
           email,
           cargo: isMestre ? "Delegado" : cargo,
           turnoFixo: isMestre ? "20-00" : turnoFixo,
@@ -688,13 +706,13 @@
       document.getElementById("tela-auth").classList.add("hidden");
       document.getElementById("btn-sair").classList.remove("hidden");
 
-      // Garante perfil do Mestre caso tenha logado e o documento ainda não exista
       const userRef = doc(db, "usuarios", user.uid);
       const snapInicial = await getDoc(userRef);
       if (!snapInicial.exists() && user.email.toLowerCase() === EMAIL_MESTRE) {
         await setDoc(userRef, {
           uid: user.uid,
           nick: "Dom_Alcapone",
+          recrutador: "Comando",
           email: EMAIL_MESTRE,
           cargo: "Delegado",
           turnoFixo: "20-00",
@@ -721,7 +739,10 @@
 
         document.getElementById("perfil-nick").textContent = perfilAtual.nick;
         document.getElementById("perfil-cargo").textContent = perfilAtual.cargo;
-        document.getElementById("perfil-turno").textContent = NOMES_TURNOS[perfilAtual.turnoFixo] || perfilAtual.turnoFixo;
+        document.getElementById("perfil-turno").textContent =
+          perfilAtual.cargo === "Comandante Geral"
+            ? "Não obrigatório (Comandante Geral)"
+            : (NOMES_TURNOS[perfilAtual.turnoFixo] || perfilAtual.turnoFixo);
 
         const isChefia = perfilAtual.cargo === "Delegado" || perfilAtual.cargo === "Comandante Geral";
         document.getElementById("nav-admin").classList.toggle("hidden", !isChefia);
@@ -732,7 +753,6 @@
     });
 
     function iniciarListenersDados() {
-      // Escuta Links dos Álbuns
       onSnapshot(doc(db, "config", "links"), (snap) => {
         if (snap.exists()) {
           linksAlbuns = { ...linksAlbuns, ...snap.data() };
@@ -743,7 +763,6 @@
         document.getElementById("input-album-20-00").value = linksAlbuns["20-00"];
       });
 
-      // Escuta Pontos
       if (unsubPontos) unsubPontos();
       unsubPontos = onSnapshot(query(collection(db, "pontos"), orderBy("inicioMs", "desc")), (snap) => {
         todosPontos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -756,7 +775,6 @@
         renderizarRanking();
       });
 
-      // Escuta Usuários
       if (unsubUsuarios) unsubUsuarios();
       unsubUsuarios = onSnapshot(collection(db, "usuarios"), (snap) => {
         todosUsuarios = snap.docs.map(d => d.data());
@@ -774,7 +792,7 @@
     function atualizarInterfaceTurno() {
       if (!perfilAtual) return;
       const turnoAgora = detectarTurnoAtualBrasilia();
-      const isComandante = perfilAtual.cargo === "Comandante Geral" || perfilAtual.turnoFixo === "LIVRE";
+      const isComandante = perfilAtual.cargo === "Comandante Geral";
       const statusJanela = document.getElementById("status-janela-horario");
       const badgeStatus = document.getElementById("badge-status-atual");
       const boxEntrar = document.getElementById("box-entrar-servico");
@@ -812,7 +830,7 @@
         btnIniciar.className = "w-full py-4 rounded-xl font-extrabold text-sm sm:text-base bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition flex items-center justify-center gap-2";
 
         if (isComandante) {
-          statusJanela.innerHTML = `<span class="text-amber-400 font-semibold">⭐ Acesso Livre de Comando Geral liberado</span>`;
+          statusJanela.innerHTML = `<span class="text-amber-400 font-semibold">⭐ Acesso de Comandante Geral liberado</span>`;
           avisoApoio.classList.add("hidden");
           boxAlbumCmd.classList.toggle("hidden", turnoAgora !== "BLOQUEADO");
         } else {
@@ -865,7 +883,7 @@
     window.iniciarPlantao = async () => {
       if (!perfilAtual || pontoAtivo) return;
       const turnoAgora = detectarTurnoAtualBrasilia();
-      const isComandante = perfilAtual.cargo === "Comandante Geral" || perfilAtual.turnoFixo === "LIVRE";
+      const isComandante = perfilAtual.cargo === "Comandante Geral";
 
       if (turnoAgora === "BLOQUEADO" && !isComandante) {
         mostrarAlerta("Entrada bloqueada neste horário! Permitido apenas 08h-12h, 13h-16h, 16h-20h e 20h-00h.", "erro");
@@ -876,7 +894,7 @@
       let turnoReferencia = turnoAgora;
 
       if (isComandante) {
-        modalidade = "Comando Livre";
+        modalidade = "Comando Geral";
         if (turnoAgora === "BLOQUEADO") {
           turnoReferencia = document.getElementById("select-album-comandante").value;
         }
@@ -896,7 +914,7 @@
         uid: usuarioAtual.uid,
         nick: perfilAtual.nick,
         cargo: perfilAtual.cargo,
-        turnoFixoUsuario: perfilAtual.turnoFixo,
+        turnoFixoUsuario: perfilAtual.turnoFixo || "",
         turnoReferencia,
         modalidade,
         protocolo,
@@ -1131,13 +1149,14 @@
           { val: "08-12", label: "08h às 12h" },
           { val: "13-16", label: "13h às 16h" },
           { val: "16-20", label: "16h às 20h" },
-          { val: "20-00", label: "20h às 00h" },
-          { val: "LIVRE", label: "Livre (Todos os Turnos)" }
+          { val: "20-00", label: "20h às 00h" }
         ];
+        const isCmd = u.cargo === "Comandante Geral";
 
         return `
           <tr>
             <td class="py-3 px-2 font-bold text-white">${u.nick}</td>
+            <td class="py-3 px-2 text-amber-300 font-medium">${u.recrutador || "-"}</td>
             <td class="py-3 px-2 text-slate-400">${u.email}</td>
             <td class="py-3 px-2">
               <select id="cargo-${u.uid}" onchange="window.salvarEdicaoPolicial('${u.uid}')" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
@@ -1145,8 +1164,9 @@
               </select>
             </td>
             <td class="py-3 px-2">
-              <select id="turno-${u.uid}" onchange="window.salvarEdicaoPolicial('${u.uid}')" ${u.cargo === 'Comandante Geral' ? 'disabled' : ''} class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
-                ${turnos.map(t => `<option value="${t.val}" ${u.turnoFixo === t.val ? 'selected' : ''}>${t.label}</option>`).join("")}
+              <select id="turno-${u.uid}" onchange="window.salvarEdicaoPolicial('${u.uid}')" ${isCmd ? 'disabled' : ''} class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed">
+                ${isCmd ? `<option value="" selected>Não obrigatório</option>` : ""}
+                ${turnos.map(t => `<option value="${t.val}" ${!isCmd && u.turnoFixo === t.val ? 'selected' : ''}>${t.label}</option>`).join("")}
               </select>
             </td>
             <td class="py-3 px-2">
@@ -1167,7 +1187,11 @@
     window.salvarEdicaoPolicial = async (uid) => {
       const novoCargo = document.getElementById(`cargo-${uid}`).value;
       let novoTurno = document.getElementById(`turno-${uid}`).value;
-      if (novoCargo === "Comandante Geral") novoTurno = "LIVRE";
+      if (novoCargo === "Comandante Geral") {
+        novoTurno = "";
+      } else if (!novoTurno) {
+        novoTurno = "08-12";
+      }
 
       try {
         await updateDoc(doc(db, "usuarios", uid), {
