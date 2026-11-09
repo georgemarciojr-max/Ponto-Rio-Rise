@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SISPonto - Polícia Rio Rise</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #090d16; color: #f1f5f9; }
+    .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.6); }
+    .gold-badge { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
+
+  <!-- TOPBAR -->
+  <header class="glass sticky top-0 z-40 border-b border-slate-800 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg gold-badge flex items-center justify-center font-extrabold text-slate-950 text-lg shadow-lg">
+          PF
+        </div>
+        <div>
+          <h1 class="font-bold text-base sm:text-lg tracking-wide text-amber-400 leading-tight">SISTEMA DE PONTO TÁTICO</h1>
+          <p class="text-xs text-slate-400">Corporação Rio Rise • Horário Oficial de Brasília</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-1.5 text-right">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Brasília (UTC-3)</span>
+          <span id="relogio-brt" class="font-mono font-bold text-sm sm:text-base text-emerald-400">--:--:--</span>
+        </div>
+        <button id="btn-sair" onclick="window.fazerLogout()" class="hidden bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/40 text-xs font-semibold px-3 py-2 rounded-lg transition">
+          Sair
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 space-y-6">
+
+    <!-- ALERTA GLOBAL -->
+    <div id="alerta-global" class="hidden rounded-xl p-4 text-sm font-medium border"></div>
+
+    <!-- TELA DE LOGIN / CADASTRO -->
+    <section id="tela-auth" class="max-w-md mx-auto mt-6 glass rounded-2xl p-6 shadow-2xl">
+      <div class="flex border-b border-slate-700 mb-6">
+        <button id="tab-login" onclick="window.alternarAbaAuth('login')" class="flex-1 pb-3 text-sm font-bold border-b-2 border-amber-400 text-amber-400">
+          Entrar no Sistema
+        </button>
+        <button id="tab-cadastro" onclick="window.alternarAbaAuth('cadastro')" class="flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200">
+          Solicitar Cadastro
+        </button>
+      </div>
+
+      <!-- FORM LOGIN -->
+      <form id="form-login" onsubmit="window.fazerLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">E-mail Funcional</label>
+          <input type="email" id="login-email" required placeholder="seuemail@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Senha</label>
+          <input type="password" id="login-senha" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
+        </div>
+        <button type="submit" id="btn-submit-login" class="w-full gold-badge text-slate-950 font-bold py-2.5 rounded-lg shadow-lg hover:opacity-95 transition text-sm">
+          Acessar Terminal
+        </button>
+      </form>
+
+      <!-- FORM CADASTRO -->
+      <form id="form-cadastro" onsubmit="window.fazerCadastro(event)" class="hidden space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Nick no Jogo (Fixo)</label>
+          <input type="text" id="cad-nick" required placeholder="Ex: Dom_Alcapone" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">E-mail</label>
+          <input type="email" id="cad-email" required placeholder="seuemail@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Senha (mín. 6 caracteres)</label>
+          <input type="password" id="cad-senha" required minlength="6" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Cargo Atual</label>
+          <select id="cad-cargo" onchange="window.verificarRegraCargoCadastro()" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400">
+            <option value="Guarda Municipal">Guarda Municipal</option>
+            <option value="Agente de Polícia">Agente de Polícia</option>
+            <option value="Escrivão de Polícia">Escrivão de Polícia</option>
+            <option value="Delegado">Delegado</option>
+            <option value="Comandante Geral">Comandante Geral</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">*Após o cadastro, o cargo só poderá ser alterado por Delegados ou Comando.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Horário Fixo de Patrulha</label>
+          <select id="cad-turno" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-400">
+            <option value="08-12">08h às 12h</option>
+            <option value="13-16">13h às 16h</option>
+            <option value="16-20">16h às 20h</option>
+            <option value="20-00">20h às 00h</option>
+            <option value="LIVRE" id="opt-turno-livre" class="hidden">Livre (Todos os Turnos)</option>
+          </select>
+          <p id="aviso-comandante" class="hidden text-[11px] text-amber-400 mt-1 font-medium">Comandante Geral possui acesso livre a todos os turnos sem restrição de horário.</p>
+        </div>
+        <button type="submit" id="btn-submit-cadastro" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg shadow-lg transition text-sm">
+          Enviar Cadastro para Aprovação
+        </button>
+      </form>
+    </section>
+
+    <!-- TELA AGUARDANDO APROVAÇÃO -->
+    <section id="tela-pendente" class="hidden max-w-lg mx-auto mt-10 glass rounded-2xl p-8 text-center space-y-4">
+      <div class="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400 text-2xl font-bold">
+        ⏳
+      </div>
+      <h2 class="text-xl font-bold text-white">Cadastro Aguardando Autorização</h2>
+      <p class="text-sm text-slate-300 leading-relaxed">
+        Seu perfil (<span id="pendente-nick" class="font-bold text-amber-400"></span> - <span id="pendente-cargo" class="font-semibold"></span>) foi registrado e aguarda liberação de um <strong>Delegado</strong> ou do <strong>Comandante Geral</strong>.
+      </p>
+      <p class="text-xs text-slate-400">Assim que autorizado, esta tela liberará o seu painel automaticamente.</p>
+    </section>
+
+    <!-- PAINEL PRINCIPAL LOGADO E APROVADO -->
+    <section id="tela-sistema" class="hidden space-y-6">
+
+      <!-- CABEÇALHO DO AGENTE -->
+      <div class="glass rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="perfil-nick" class="text-lg sm:text-xl font-extrabold text-white"></span>
+            <span id="perfil-cargo" class="text-xs font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30"></span>
+          </div>
+          <p class="text-xs text-slate-400">
+            Horário Fixo Registrado: <strong id="perfil-turno" class="text-slate-200"></strong>
+          </p>
+        </div>
+
+        <!-- ABAS DE NAVEGAÇÃO -->
+        <div class="flex flex-wrap gap-2">
+          <button onclick="window.mudarSecao('ponto')" id="nav-ponto" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 transition">
+            ⏱️ Bater Ponto
+          </button>
+          <button onclick="window.mudarSecao('guarnicao')" id="nav-guarnicao" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+            🚔 Em Serviço (<span id="count-ativos">0</span>)
+          </button>
+          <button onclick="window.mudarSecao('historico')" id="nav-historico" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+            📋 Meus Pontos
+          </button>
+          <button onclick="window.mudarSecao('admin')" id="nav-admin" class="hidden px-3.5 py-2 rounded-lg text-xs font-bold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-600/50 transition">
+            🛡️ Painel Delegado <span id="badge-pendentes" class="hidden ml-1 px-1.5 py-0.2 bg-red-500 text-white rounded-full text-[10px]">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 1: BATER PONTO -->
+      <div id="secao-ponto" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- CONTROLE DE ENTRADA / SAÍDA -->
+        <div class="lg:col-span-7 glass rounded-2xl p-5 sm:p-6 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-white">Controle de Plantão</h2>
+              <p id="status-janela-horario" class="text-xs text-slate-400 mt-0.5">Verificando janela de turno...</p>
+            </div>
+            <span id="badge-status-atual" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400">
+              FORA DE SERVIÇO
+            </span>
+          </div>
+
+          <!-- QUANDO FORA DE SERVIÇO -->
+          <div id="box-entrar-servico" class="space-y-4">
+            <div id="aviso-apoio-box" class="hidden bg-amber-500/10 border border-amber-500/40 rounded-xl p-4 space-y-2">
+              <p class="text-xs font-bold text-amber-300 uppercase">⚠️ Atenção: Horário Fora do seu Turno Fixo</p>
+              <p class="text-xs text-slate-300">
+                O turno atual não corresponde ao seu horário fixo cadastrado. Para prosseguir, confirme abaixo que você está entrando em <strong>Turno de Apoio</strong>.
+              </p>
+              <label class="flex items-center gap-2 pt-1 cursor-pointer">
+                <input type="checkbox" id="check-confirmar-apoio" class="w-4 h-4 accent-amber-500 rounded" />
+                <span class="text-xs font-semibold text-amber-200">Confirmo entrada em Turno de Apoio</span>
+              </label>
+            </div>
+
+            <!-- SELETOR DE ÁLBUM APENAS SE COMANDANTE GERAL ENTRAR EM HORÁRIO BLOQUEADO -->
+            <div id="box-album-comandante" class="hidden bg-slate-900 border border-slate-700 rounded-xl p-3.5">
+              <label class="block text-xs font-semibold uppercase text-amber-400 mb-1">Álbum de Destino (Horário Livre Comando)</label>
+              <select id="select-album-comandante" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs">
+                <option value="08-12">Álbum 08h às 12h</option>
+                <option value="13-16">Álbum 13h às 16h</option>
+                <option value="16-20">Álbum 16h às 20h</option>
+                <option value="20-00">Álbum 20h às 00h</option>
+              </select>
+            </div>
+
+            <button id="btn-iniciar-plantao" onclick="window.iniciarPlantao()" class="w-full py-4 rounded-xl font-extrabold text-sm sm:text-base bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition flex items-center justify-center gap-2">
+              🟢 INICIAR SERVIÇO (GERAR PROTOCOLO)
+            </button>
+          </div>
+
+          <!-- QUANDO EM SERVIÇO -->
+          <div id="box-sair-servico" class="hidden space-y-4">
+            <div class="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-emerald-300 font-semibold">Protocolo Ativo:</span>
+                <span id="ativo-protocolo" class="font-mono font-bold text-sm text-amber-400 bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700"></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-slate-400">Início do Plantão:</span>
+                <span id="ativo-inicio" class="text-xs font-semibold text-white"></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-slate-400">Modalidade / Turno:</span>
+                <span id="ativo-modalidade" class="text-xs font-bold text-emerald-400"></span>
+              </div>
+            </div>
+
+            <button onclick="window.encerrarPlantao()" class="w-full py-4 rounded-xl font-extrabold text-sm sm:text-base bg-red-600 hover:bg-red-500 text-white shadow-lg transition flex items-center justify-center gap-2">
+              🔴 ENCERRAR SERVIÇO (FECHAR PONTO)
+            </button>
+          </div>
+        </div>
+
+        <!-- COMPROVANTE ANTIFRAUDE E LINK DO ÁLBUM -->
+        <div class="lg:col-span-5 glass rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400">📸 Comprovante Antifraude</h3>
+              <span id="badge-tipo-comprovante" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">Aguardando ação</span>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Copie o texto gerado abaixo (com o seu <strong>código único</strong>) e cole na descrição do seu print dentro do álbum do Google Fotos do turno.
+            </p>
+            <textarea id="texto-comprovante" readonly rows="8" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none" placeholder="O comprovante com código antifraude aparecerá aqui assim que você iniciar ou encerrar o plantão..."></textarea>
+          </div>
+
+          <div class="space-y-2.5 pt-2">
+            <button id="btn-copiar-comprovante" onclick="window.copiarComprovante()" disabled class="w-full py-2.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-400 border border-slate-700 transition">
+              📋 1. Copiar Texto do Comprovante
+            </button>
+            <a id="link-album-turno" href="#" target="_blank" rel="noopener noreferrer" class="pointer-events-none opacity-50 w-full py-2.5 rounded-lg font-bold text-xs gold-badge text-slate-950 flex items-center justify-center gap-2 transition">
+              🖼️ 2. Abrir Álbum do Turno (Google Fotos)
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SEÇÃO 2: GUARNIÇÃO EM SERVIÇO AO VIVO -->
+      <div id="secao-guarnicao" class="hidden glass rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-white">Guarnição em Serviço Agora</h2>
+            <p class="text-xs text-slate-400">Policiais com ponto aberto em tempo real</p>
+          </div>
+        </div>
+        <div id="lista-guarnicao" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- SEÇÃO 3: MEU HISTÓRICO -->
+      <div id="secao-historico" class="hidden glass rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-white">Meus Registros de Ponto</h2>
+            <p class="text-xs text-slate-400">Histórico individual e status de validação da chefia</p>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                <th class="py-3 px-2">Protocolo</th>
+                <th class="py-3 px-2">Turno / Tipo</th>
+                <th class="py-3 px-2">Entrada</th>
+                <th class="py-3 px-2">Saída</th>
+                <th class="py-3 px-2">Duração</th>
+                <th class="py-3 px-2">Validação</th>
+                <th class="py-3 px-2 text-right">Texto</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-meu-historico" class="divide-y divide-slate-800/60"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 4: PAINEL DO DELEGADO / COMANDO GERAL -->
+      <div id="secao-admin" class="hidden space-y-6">
+
+        <!-- SUB-NAVEGAÇÃO ADMIN -->
+        <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+          <button onclick="window.mudarAbaAdmin('auditoria')" id="adm-tab-auditoria" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">
+            🔍 Conferência de Fim de Turno
+          </button>
+          <button onclick="window.mudarAbaAdmin('efetivo')" id="adm-tab-efetivo" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300">
+            👮 Efetivo e Aprovações
+          </button>
+          <button onclick="window.mudarAbaAdmin('ranking')" id="adm-tab-ranking" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300">
+            🏆 Banco de Horas Validado
+          </button>
+          <button onclick="window.mudarAbaAdmin('albuns')" id="adm-tab-albuns" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300">
+            🔗 Links dos Álbuns
+          </button>
+        </div>
+
+        <!-- ABA ADMIN 1: AUDITORIA DE PONTOS -->
+        <div id="adm-box-auditoria" class="glass rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h3 class="text-base font-bold text-white">Validação de Turnos e Prints</h3>
+              <p class="text-xs text-slate-400">Copie o protocolo, confira os 2 prints no álbum do turno e valide o ponto.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <input type="text" id="filtro-busca-protocolo" oninput="window.renderizarAuditoria()" placeholder="Buscar protocolo ou nick..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-400" />
+              <select id="filtro-turno-auditoria" onchange="window.renderizarAuditoria()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs">
+                <option value="TODOS">Todos os Turnos</option>
+                <option value="08-12">Turno 08h às 12h</option>
+                <option value="13-16">Turno 13h às 16h</option>
+                <option value="16-20">Turno 16h às 20h</option>
+                <option value="20-00">Turno 20h às 00h</option>
+              </select>
+              <select id="filtro-status-auditoria" onchange="window.renderizarAuditoria()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs">
+                <option value="TODOS">Todos os Status</option>
+                <option value="pendente">Pendentes de Validação</option>
+                <option value="validado">Validados</option>
+                <option value="invalidado">Invalidados</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                  <th class="py-3 px-2">Protocolo</th>
+                  <th class="py-3 px-2">Policial / Cargo</th>
+                  <th class="py-3 px-2">Turno / Modalidade</th>
+                  <th class="py-3 px-2">Entrada / Saída</th>
+                  <th class="py-3 px-2">Tempo</th>
+                  <th class="py-3 px-2">Álbum</th>
+                  <th class="py-3 px-2">Status</th>
+                  <th class="py-3 px-2 text-right">Ação do Delegado</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-auditoria" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA ADMIN 2: GESTÃO DO EFETIVO -->
+        <div id="adm-box-efetivo" class="hidden glass rounded-2xl p-5 space-y-4">
+          <div>
+            <h3 class="text-base font-bold text-white">Controle de Policiais, Cargos e Horários Fixos</h3>
+            <p class="text-xs text-slate-400">Aprove novos cadastros ou altere a patente e o turno fixo dos agentes.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                  <th class="py-3 px-2">Nick</th>
+                  <th class="py-3 px-2">E-mail</th>
+                  <th class="py-3 px-2">Cargo (Editável)</th>
+                  <th class="py-3 px-2">Turno Fixo (Editável)</th>
+                  <th class="py-3 px-2">Status Conta</th>
+                  <th class="py-3 px-2 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-efetivo" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA ADMIN 3: RANKING DE HORAS -->
+        <div id="adm-box-ranking" class="hidden glass rounded-2xl p-5 space-y-4">
+          <div>
+            <h3 class="text-base font-bold text-white">Resumo de Horas Trabalhadas</h3>
+            <p class="text-xs text-slate-400">Contabiliza os turnos validados pelos Delegados e mostra os pendentes separadamente.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                  <th class="py-3 px-2">Policial</th>
+                  <th class="py-3 px-2">Cargo</th>
+                  <th class="py-3 px-2">Turnos Fixos</th>
+                  <th class="py-3 px-2">Turnos Apoio</th>
+                  <th class="py-3 px-2">Horas Pendentes</th>
+                  <th class="py-3 px-2">Horas Validadas</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-ranking" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA ADMIN 4: LINKS DOS ÁLBUNS -->
+        <div id="adm-box-albuns" class="hidden glass rounded-2xl p-5 space-y-4 max-w-xl">
+          <div>
+            <h3 class="text-base font-bold text-white">Links dos Álbuns Compartilhados (Google Fotos)</h3>
+            <p class="text-xs text-slate-400">Os links enviados já estão configurados por padrão, mas você pode atualizá-los aqui se criar novos álbuns.</p>
+          </div>
+          <form onsubmit="window.salvarLinksAlbuns(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Turno 08h às 12h</label>
+              <input type="url" id="input-album-08-12" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Turno 13h às 16h</label>
+              <input type="url" id="input-album-13-16" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Turno 16h às 20h</label>
+              <input type="url" id="input-album-16-20" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Turno 20h às 00h</label>
+              <input type="url" id="input-album-20-00" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2" />
+            </div>
+            <button type="submit" class="gold-badge text-slate-950 font-bold px-5 py-2.5 rounded-lg shadow">
+              Salvar Links dos Álbuns
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FIREBASE & LÓGICA DO SISTEMA -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      updateDoc,
+      collection,
+      addDoc,
+      onSnapshot,
+      query,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCJ1WclEAps3KejkYKpiqfhn_ZgjdFVop4",
+      authDomain: "ponto-policia-rp.firebaseapp.com",
+      projectId: "ponto-policia-rp",
+      storageBucket: "ponto-policia-rp.firebasestorage.app",
+      messagingSenderId: "56122951079",
+      appId: "1:56122951079:web:89c1e7c2ef63dc6f2ea282",
+      measurementId: "G-R6XHCJPPWD"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // LINKS PADRÃO ENVIADOS
+    let linksAlbuns = {
+      "08-12": "https://photos.app.goo.gl/ScfW2FQCzaU6vBZn7",
+      "13-16": "https://photos.app.goo.gl/NhrGDpx8BCncxhLE8",
+      "16-20": "https://photos.app.goo.gl/MNHmWceWLRMpgjNJ7",
+      "20-00": "https://photos.app.goo.gl/RRTu9U7nvsPUBWKx6"
+    };
+
+    const NOMES_TURNOS = {
+      "08-12": "08h às 12h",
+      "13-16": "13h às 16h",
+      "16-20": "16h às 20h",
+      "20-00": "20h às 00h",
+      "LIVRE": "Livre (Todos os Turnos)"
+    };
+
+    const EMAIL_MESTRE = "georgemarciojr@gmail.com";
+
+    let usuarioAtual = null;
+    let perfilAtual = null;
+    let todosUsuarios = [];
+    let todosPontos = [];
+    let pontoAtivo = null;
+    let unsubPerfil = null;
+    let unsubUsuarios = null;
+    let unsubPontos = null;
+
+    // UTILITÁRIOS DE HORÁRIO DE BRASÍLIA (UTC-3)
+    function obterPartesBrasilia(data = new Date()) {
+      const opcoes = {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false
+      };
+      const partes = new Intl.DateTimeFormat("pt-BR", opcoes).formatToParts(data);
+      const mapa = {};
+      partes.forEach(p => { mapa[p.type] = p.value; });
+      const hora = parseInt(mapa.hour, 10) === 24 ? 0 : parseInt(mapa.hour, 10);
+      return {
+        hora,
+        minuto: parseInt(mapa.minute, 10),
+        formatado: `${mapa.day}/${mapa.month}/${mapa.year} às ${String(hora).padStart(2, '0')}:${mapa.minute}:${mapa.second}`,
+        relogio: `${String(hora).padStart(2, '0')}:${mapa.minute}:${mapa.second}`
+      };
+    }
+
+    function detectarTurnoAtualBrasilia() {
+      const { hora } = obterPartesBrasilia();
+      if (hora >= 8 && hora < 12) return "08-12";
+      if (hora >= 13 && hora < 16) return "13-16";
+      if (hora >= 16 && hora < 20) return "16-20";
+      if (hora >= 20 && hora <= 23) return "20-00";
+      return "BLOQUEADO"; // 00h-08h e 12h-13h
+    }
+
+    function gerarCodigoProtocolo() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let codigo = "RR-";
+      for (let i = 0; i < 6; i++) {
+        codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return codigo;
+    }
+
+    function formatarDuracao(minutosTotais) {
+      if (minutosTotais == null || isNaN(minutosTotais)) return "Em andamento";
+      const h = Math.floor(minutosTotais / 60);
+      const m = Math.round(minutosTotais % 60);
+      return `${h}h ${m}m`;
+    }
+
+    function mostrarAlerta(mensagem, tipo = "info") {
+      const el = document.getElementById("alerta-global");
+      el.classList.remove("hidden", "bg-red-950/80", "border-red-500/50", "text-red-200", "bg-emerald-950/80", "border-emerald-500/50", "text-emerald-200", "bg-amber-950/80", "border-amber-500/50", "text-amber-200");
+      if (tipo === "erro") {
+        el.classList.add("bg-red-950/80", "border-red-500/50", "text-red-200");
+      } else if (tipo === "sucesso") {
+        el.classList.add("bg-emerald-950/80", "border-emerald-500/50", "text-emerald-200");
+      } else {
+        el.classList.add("bg-amber-950/80", "border-amber-500/50", "text-amber-200");
+      }
+      el.textContent = mensagem;
+      setTimeout(() => el.classList.add("hidden"), 6000);
+    }
+
+    // RELÓGIO EM TEMPO REAL
+    setInterval(() => {
+      const agora = obterPartesBrasilia();
+      document.getElementById("relogio-brt").textContent = agora.relogio;
+      if (perfilAtual && perfilAtual.status === "aprovado") {
+        atualizarInterfaceTurno();
+      }
+    }, 1000);
+
+    // REGRAS DE UI DE LOGIN E CADASTRO
+    window.alternarAbaAuth = (aba) => {
+      const isLogin = aba === "login";
+      document.getElementById("form-login").classList.toggle("hidden", !isLogin);
+      document.getElementById("form-cadastro").classList.toggle("hidden", isLogin);
+      document.getElementById("tab-login").className = isLogin
+        ? "flex-1 pb-3 text-sm font-bold border-b-2 border-amber-400 text-amber-400"
+        : "flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400";
+      document.getElementById("tab-cadastro").className = !isLogin
+        ? "flex-1 pb-3 text-sm font-bold border-b-2 border-amber-400 text-amber-400"
+        : "flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400";
+    };
+
+    window.verificarRegraCargoCadastro = () => {
+      const cargo = document.getElementById("cad-cargo").value;
+      const selectTurno = document.getElementById("cad-turno");
+      const optLivre = document.getElementById("opt-turno-livre");
+      const aviso = document.getElementById("aviso-comandante");
+
+      if (cargo === "Comandante Geral") {
+        optLivre.classList.remove("hidden");
+        selectTurno.value = "LIVRE";
+        selectTurno.disabled = true;
+        aviso.classList.remove("hidden");
+      } else {
+        optLivre.classList.add("hidden");
+        selectTurno.disabled = false;
+        if (selectTurno.value === "LIVRE") selectTurno.value = "08-12";
+        aviso.classList.add("hidden");
+      }
+    };
+
+    // LOGIN (COM AUTO-CRIAÇÃO DA CONTA MESTRE DOM_ALCAPONE NO PRIMEIRO ACESSO)
+    window.fazerLogin = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim().toLowerCase();
+      const senha = document.getElementById("login-senha").value;
+      const btn = document.getElementById("btn-submit-login");
+      btn.disabled = true;
+      btn.textContent = "Autenticando...";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, senha);
+      } catch (err) {
+        // Se for o primeiro login do Delegado Mestre Dom_Alcapone, cria e aprova automaticamente
+        if (email === EMAIL_MESTRE) {
+          try {
+            const cred = await createUserWithEmailAndPassword(auth, email, senha);
+            await setDoc(doc(db, "usuarios", cred.user.uid), {
+              uid: cred.user.uid,
+              nick: "Dom_Alcapone",
+              email: EMAIL_MESTRE,
+              cargo: "Delegado",
+              turnoFixo: "20-00",
+              status: "aprovado",
+              criadoEm: Date.now()
+            });
+            mostrarAlerta("Conta Mestre Dom_Alcapone provisionada com sucesso!", "sucesso");
+          } catch (createErr) {
+            mostrarAlerta("Erro ao autenticar conta mestre: verifique a senha digitada.", "erro");
+          }
+        } else {
+          mostrarAlerta("E-mail ou senha incorretos, ou conta ainda não cadastrada.", "erro");
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Acessar Terminal";
+      }
+    };
+
+    // CADASTRO DE NOVOS POLICIAIS
+    window.fazerCadastro = async (e) => {
+      e.preventDefault();
+      const nick = document.getElementById("cad-nick").value.trim();
+      const email = document.getElementById("cad-email").value.trim().toLowerCase();
+      const senha = document.getElementById("cad-senha").value;
+      const cargo = document.getElementById("cad-cargo").value;
+      const turnoFixo = cargo === "Comandante Geral" ? "LIVRE" : document.getElementById("cad-turno").value;
+      const btn = document.getElementById("btn-submit-cadastro");
+
+      btn.disabled = true;
+      btn.textContent = "Registrando...";
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, senha);
+        const isMestre = email === EMAIL_MESTRE;
+        await setDoc(doc(db, "usuarios", cred.user.uid), {
+          uid: cred.user.uid,
+          nick: isMestre ? "Dom_Alcapone" : nick,
+          email,
+          cargo: isMestre ? "Delegado" : cargo,
+          turnoFixo: isMestre ? "20-00" : turnoFixo,
+          status: isMestre ? "aprovado" : "pendente",
+          criadoEm: Date.now()
+        });
+        mostrarAlerta("Cadastro realizado com sucesso!", "sucesso");
+      } catch (err) {
+        mostrarAlerta("Erro ao cadastrar: " + err.message, "erro");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Enviar Cadastro para Aprovação";
+      }
+    };
+
+    window.fazerLogout = async () => {
+      await signOut(auth);
+    };
+
+    // MONITORAMENTO DE SESSÃO
+    onAuthStateChanged(auth, async (user) => {
+      usuarioAtual = user;
+      if (unsubPerfil) unsubPerfil();
+      if (unsubUsuarios) unsubUsuarios();
+      if (unsubPontos) unsubPontos();
+
+      if (!user) {
+        document.getElementById("tela-auth").classList.remove("hidden");
+        document.getElementById("tela-pendente").classList.add("hidden");
+        document.getElementById("tela-sistema").classList.add("hidden");
+        document.getElementById("btn-sair").classList.add("hidden");
+        return;
+      }
+
+      document.getElementById("tela-auth").classList.add("hidden");
+      document.getElementById("btn-sair").classList.remove("hidden");
+
+      // Garante perfil do Mestre caso tenha logado e o documento ainda não exista
+      const userRef = doc(db, "usuarios", user.uid);
+      const snapInicial = await getDoc(userRef);
+      if (!snapInicial.exists() && user.email.toLowerCase() === EMAIL_MESTRE) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          nick: "Dom_Alcapone",
+          email: EMAIL_MESTRE,
+          cargo: "Delegado",
+          turnoFixo: "20-00",
+          status: "aprovado",
+          criadoEm: Date.now()
+        });
+      }
+
+      // Escuta perfil em tempo real
+      unsubPerfil = onSnapshot(userRef, (docSnap) => {
+        if (!docSnap.exists()) return;
+        perfilAtual = docSnap.data();
+
+        if (perfilAtual.status !== "aprovado") {
+          document.getElementById("tela-pendente").classList.remove("hidden");
+          document.getElementById("tela-sistema").classList.add("hidden");
+          document.getElementById("pendente-nick").textContent = perfilAtual.nick;
+          document.getElementById("pendente-cargo").textContent = perfilAtual.cargo;
+          return;
+        }
+
+        document.getElementById("tela-pendente").classList.add("hidden");
+        document.getElementById("tela-sistema").classList.remove("hidden");
+
+        document.getElementById("perfil-nick").textContent = perfilAtual.nick;
+        document.getElementById("perfil-cargo").textContent = perfilAtual.cargo;
+        document.getElementById("perfil-turno").textContent = NOMES_TURNOS[perfilAtual.turnoFixo] || perfilAtual.turnoFixo;
+
+        const isChefia = perfilAtual.cargo === "Delegado" || perfilAtual.cargo === "Comandante Geral";
+        document.getElementById("nav-admin").classList.toggle("hidden", !isChefia);
+
+        iniciarListenersDados();
+        atualizarInterfaceTurno();
+      });
+    });
+
+    function iniciarListenersDados() {
+      // Escuta Links dos Álbuns
+      onSnapshot(doc(db, "config", "links"), (snap) => {
+        if (snap.exists()) {
+          linksAlbuns = { ...linksAlbuns, ...snap.data() };
+        }
+        document.getElementById("input-album-08-12").value = linksAlbuns["08-12"];
+        document.getElementById("input-album-13-16").value = linksAlbuns["13-16"];
+        document.getElementById("input-album-16-20").value = linksAlbuns["16-20"];
+        document.getElementById("input-album-20-00").value = linksAlbuns["20-00"];
+      });
+
+      // Escuta Pontos
+      if (unsubPontos) unsubPontos();
+      unsubPontos = onSnapshot(query(collection(db, "pontos"), orderBy("inicioMs", "desc")), (snap) => {
+        todosPontos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        pontoAtivo = todosPontos.find(p => p.uid === usuarioAtual.uid && p.statusPonto === "aberto") || null;
+
+        atualizarInterfaceTurno();
+        renderizarGuarnicao();
+        renderizarMeuHistorico();
+        window.renderizarAuditoria();
+        renderizarRanking();
+      });
+
+      // Escuta Usuários
+      if (unsubUsuarios) unsubUsuarios();
+      unsubUsuarios = onSnapshot(collection(db, "usuarios"), (snap) => {
+        todosUsuarios = snap.docs.map(d => d.data());
+        const pendentes = todosUsuarios.filter(u => u.status === "pendente").length;
+        const badge = document.getElementById("badge-pendentes");
+        badge.textContent = pendentes;
+        badge.classList.toggle("hidden", pendentes === 0);
+
+        renderizarEfetivo();
+        renderizarRanking();
+      });
+    }
+
+    // ATUALIZA ESTADO DO BOTÃO DE PONTO E TURNO ATUAL
+    function atualizarInterfaceTurno() {
+      if (!perfilAtual) return;
+      const turnoAgora = detectarTurnoAtualBrasilia();
+      const isComandante = perfilAtual.cargo === "Comandante Geral" || perfilAtual.turnoFixo === "LIVRE";
+      const statusJanela = document.getElementById("status-janela-horario");
+      const badgeStatus = document.getElementById("badge-status-atual");
+      const boxEntrar = document.getElementById("box-entrar-servico");
+      const boxSair = document.getElementById("box-sair-servico");
+      const btnIniciar = document.getElementById("btn-iniciar-plantao");
+      const avisoApoio = document.getElementById("aviso-apoio-box");
+      const boxAlbumCmd = document.getElementById("box-album-comandante");
+
+      if (pontoAtivo) {
+        badgeStatus.textContent = "EM SERVIÇO ATIVO";
+        badgeStatus.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        boxEntrar.classList.add("hidden");
+        boxSair.classList.remove("hidden");
+
+        document.getElementById("ativo-protocolo").textContent = pontoAtivo.protocolo;
+        document.getElementById("ativo-inicio").textContent = pontoAtivo.inicioFormatado;
+        document.getElementById("ativo-modalidade").textContent = `${NOMES_TURNOS[pontoAtivo.turnoReferencia]} (${pontoAtivo.modalidade})`;
+        statusJanela.textContent = `Plantão iniciado no turno ${NOMES_TURNOS[pontoAtivo.turnoReferencia]}`;
+        return;
+      }
+
+      badgeStatus.textContent = "FORA DE SERVIÇO";
+      badgeStatus.className = "px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400";
+      boxEntrar.classList.remove("hidden");
+      boxSair.classList.add("hidden");
+
+      if (turnoAgora === "BLOQUEADO" && !isComandante) {
+        statusJanela.innerHTML = `<span class="text-red-400 font-semibold">⛔ Horário Bloqueado (12h–13h / 00h–08h). Aguarde a abertura do próximo turno.</span>`;
+        btnIniciar.disabled = true;
+        btnIniciar.className = "w-full py-4 rounded-xl font-extrabold text-sm bg-slate-800 text-slate-500 cursor-not-allowed";
+        avisoApoio.classList.add("hidden");
+        boxAlbumCmd.classList.add("hidden");
+      } else {
+        btnIniciar.disabled = false;
+        btnIniciar.className = "w-full py-4 rounded-xl font-extrabold text-sm sm:text-base bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition flex items-center justify-center gap-2";
+
+        if (isComandante) {
+          statusJanela.innerHTML = `<span class="text-amber-400 font-semibold">⭐ Acesso Livre de Comando Geral liberado</span>`;
+          avisoApoio.classList.add("hidden");
+          boxAlbumCmd.classList.toggle("hidden", turnoAgora !== "BLOQUEADO");
+        } else {
+          statusJanela.innerHTML = `Janela Atual: <strong class="text-emerald-400">${NOMES_TURNOS[turnoAgora]}</strong>`;
+          boxAlbumCmd.classList.add("hidden");
+          const foraDoFixo = perfilAtual.turnoFixo !== turnoAgora;
+          avisoApoio.classList.toggle("hidden", !foraDoFixo);
+        }
+      }
+    }
+
+    // GERAR TEXTO DO COMPROVANTE E ATUALIZAR BOTÃO DO ÁLBUM
+    function exibirComprovanteNaTela(ponto, tipo) {
+      const area = document.getElementById("texto-comprovante");
+      const badge = document.getElementById("badge-tipo-comprovante");
+      const btnCopiar = document.getElementById("btn-copiar-comprovante");
+      const linkAlbum = document.getElementById("link-album-turno");
+
+      const linhas = [
+        `🚔 COMPROVANTE DE PONTO - ${tipo}`,
+        `🔑 Protocolo Antifraude: ${ponto.protocolo}`,
+        `👮 Policial: ${ponto.nick}`,
+        `🎖️ Cargo: ${ponto.cargo}`,
+        `🕒 Turno do Álbum: ${NOMES_TURNOS[ponto.turnoReferencia]}`,
+        `📌 Modalidade: ${ponto.modalidade}`,
+        `🟢 Entrada: ${ponto.inicioFormatado} (BRT)`
+      ];
+
+      if (tipo === "SAÍDA") {
+        linhas.push(`🔴 Saída: ${ponto.fimFormatado} (BRT)`);
+        linhas.push(`⏱️ Tempo Total: ${formatarDuracao(ponto.duracaoMinutos)}`);
+      }
+
+      area.value = linhas.join("\n");
+      badge.textContent = `Comprovante de ${tipo}`;
+      badge.className = tipo === "ENTRADA"
+        ? "text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300"
+        : "text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300";
+
+      btnCopiar.disabled = false;
+      btnCopiar.className = "w-full py-2.5 rounded-lg font-bold text-xs bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 transition cursor-pointer";
+
+      const urlDestino = linksAlbuns[ponto.turnoReferencia] || linksAlbuns["20-00"];
+      linkAlbum.href = urlDestino;
+      linkAlbum.classList.remove("pointer-events-none", "opacity-50");
+      linkAlbum.textContent = `🖼️ 2. Abrir Álbum (${NOMES_TURNOS[ponto.turnoReferencia]})`;
+    }
+
+    // INICIAR PLANTÃO (CLOCK-IN)
+    window.iniciarPlantao = async () => {
+      if (!perfilAtual || pontoAtivo) return;
+      const turnoAgora = detectarTurnoAtualBrasilia();
+      const isComandante = perfilAtual.cargo === "Comandante Geral" || perfilAtual.turnoFixo === "LIVRE";
+
+      if (turnoAgora === "BLOQUEADO" && !isComandante) {
+        mostrarAlerta("Entrada bloqueada neste horário! Permitido apenas 08h-12h, 13h-16h, 16h-20h e 20h-00h.", "erro");
+        return;
+      }
+
+      let modalidade = "Turno Fixo";
+      let turnoReferencia = turnoAgora;
+
+      if (isComandante) {
+        modalidade = "Comando Livre";
+        if (turnoAgora === "BLOQUEADO") {
+          turnoReferencia = document.getElementById("select-album-comandante").value;
+        }
+      } else if (perfilAtual.turnoFixo !== turnoAgora) {
+        const confirmado = document.getElementById("check-confirmar-apoio").checked;
+        if (!confirmado) {
+          mostrarAlerta("Confirme a caixa de 'Turno de Apoio' antes de iniciar fora do seu horário fixo.", "erro");
+          return;
+        }
+        modalidade = "Turno de Apoio";
+      }
+
+      const agora = obterPartesBrasilia();
+      const protocolo = gerarCodigoProtocolo();
+
+      const novoPonto = {
+        uid: usuarioAtual.uid,
+        nick: perfilAtual.nick,
+        cargo: perfilAtual.cargo,
+        turnoFixoUsuario: perfilAtual.turnoFixo,
+        turnoReferencia,
+        modalidade,
+        protocolo,
+        inicioMs: Date.now(),
+        inicioFormatado: agora.formatado,
+        fimMs: null,
+        fimFormatado: null,
+        duracaoMinutos: null,
+        statusPonto: "aberto",
+        statusValidacao: "pendente",
+        validadoPor: null
+      };
+
+      try {
+        await addDoc(collection(db, "pontos"), novoPonto);
+        document.getElementById("check-confirmar-apoio").checked = false;
+        exibirComprovanteNaTela(novoPonto, "ENTRADA");
+        mostrarAlerta(`Serviço iniciado! Copie o comprovante ${protocolo} e poste o print no álbum.`, "sucesso");
+      } catch (err) {
+        mostrarAlerta("Erro ao registrar entrada: " + err.message, "erro");
+      }
+    };
+
+    // ENCERRAR PLANTÃO (CLOCK-OUT)
+    window.encerrarPlantao = async () => {
+      if (!pontoAtivo) return;
+      const agora = obterPartesBrasilia();
+      const fimMs = Date.now();
+      const duracaoMinutos = Math.max(1, Math.round((fimMs - pontoAtivo.inicioMs) / 60000));
+
+      const dadosAtualizados = {
+        fimMs,
+        fimFormatado: agora.formatado,
+        duracaoMinutos,
+        statusPonto: "fechado"
+      };
+
+      try {
+        await updateDoc(doc(db, "pontos", pontoAtivo.id), dadosAtualizados);
+        const pontoFinal = { ...pontoAtivo, ...dadosAtualizados };
+        exibirComprovanteNaTela(pontoFinal, "SAÍDA");
+        mostrarAlerta(`Plantão encerrado! Copie o comprovante de saída (${pontoFinal.protocolo}) e poste no mesmo álbum.`, "sucesso");
+      } catch (err) {
+        mostrarAlerta("Erro ao encerrar plantão: " + err.message, "erro");
+      }
+    };
+
+    window.copiarComprovante = () => {
+      const texto = document.getElementById("texto-comprovante").value;
+      if (!texto) return;
+      navigator.clipboard.writeText(texto);
+      mostrarAlerta("Texto copiado! Agora clique no botão dourado para abrir o álbum do Google Fotos.", "sucesso");
+    };
+
+    window.reverComprovante = (idPonto) => {
+      const p = todosPontos.find(item => item.id === idPonto);
+      if (!p) return;
+      const tipo = p.statusPonto === "aberto" ? "ENTRADA" : "SAÍDA";
+      exibirComprovanteNaTela(p, tipo);
+      window.mudarSecao("ponto");
+      mostrarAlerta(`Comprovante ${p.protocolo} carregado na tela principal.`, "info");
+    };
+
+    // NAVEGAÇÃO ENTRE SEÇÕES
+    window.mudarSecao = (secao) => {
+      ["ponto", "guarnicao", "historico", "admin"].forEach(s => {
+        document.getElementById(`secao-${s}`).classList.toggle("hidden", s !== secao);
+      });
+    };
+
+    window.mudarAbaAdmin = (aba) => {
+      ["auditoria", "efetivo", "ranking", "albuns"].forEach(a => {
+        document.getElementById(`adm-box-${a}`).classList.toggle("hidden", a !== aba);
+        document.getElementById(`adm-tab-${a}`).className = a === aba
+          ? "px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950"
+          : "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300";
+      });
+    };
+
+    // RENDERIZAR GUARNIÇÃO EM SERVIÇO
+    function renderizarGuarnicao() {
+      const ativos = todosPontos.filter(p => p.statusPonto === "aberto");
+      document.getElementById("count-ativos").textContent = ativos.length;
+      const container = document.getElementById("lista-guarnicao");
+
+      if (ativos.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 text-xs">Nenhum policial em serviço no momento.</div>`;
+        return;
+      }
+
+      container.innerHTML = ativos.map(p => `
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-sm text-white">${p.nick}</span>
+            <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">${p.protocolo}</span>
+          </div>
+          <p class="text-xs text-slate-400">${p.cargo}</p>
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+            <span class="text-emerald-400 font-semibold">${NOMES_TURNOS[p.turnoReferencia]} (${p.modalidade})</span>
+            <span class="text-slate-400">${p.inicioFormatado.split(" às ")[1]}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // RENDERIZAR HISTÓRICO DO PRÓPRIO AGENTE
+    function renderizarMeuHistorico() {
+      if (!usuarioAtual) return;
+      const meus = todosPontos.filter(p => p.uid === usuarioAtual.uid);
+      const tbody = document.getElementById("tabela-meu-historico");
+
+      if (meus.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">Nenhum ponto registrado ainda.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = meus.map(p => {
+        const badgeVal = p.statusValidacao === "validado"
+          ? `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">✅ Validado</span>`
+          : p.statusValidacao === "invalidado"
+          ? `<span class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-bold">❌ Invalidado</span>`
+          : `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">⏳ Pendente</span>`;
+
+        return `
+          <tr>
+            <td class="py-3 px-2 font-mono font-bold text-amber-400">${p.protocolo}</td>
+            <td class="py-3 px-2">${NOMES_TURNOS[p.turnoReferencia]} <span class="block text-[10px] text-slate-400">${p.modalidade}</span></td>
+            <td class="py-3 px-2">${p.inicioFormatado}</td>
+            <td class="py-3 px-2">${p.fimFormatado || '<span class="text-emerald-400 font-semibold">Em Serviço</span>'}</td>
+            <td class="py-3 px-2 font-semibold">${formatarDuracao(p.duracaoMinutos)}</td>
+            <td class="py-3 px-2">${badgeVal}</td>
+            <td class="py-3 px-2 text-right">
+              <button onclick="window.reverComprovante('${p.id}')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold">
+                Ver Texto
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // RENDERIZAR AUDITORIA (DELEGADOS E COMANDO)
+    window.renderizarAuditoria = () => {
+      const tbody = document.getElementById("tabela-auditoria");
+      if (!tbody) return;
+
+      const busca = (document.getElementById("filtro-busca-protocolo")?.value || "").trim().toLowerCase();
+      const filtroTurno = document.getElementById("filtro-turno-auditoria")?.value || "TODOS";
+      const filtroStatus = document.getElementById("filtro-status-auditoria")?.value || "TODOS";
+
+      const filtrados = todosPontos.filter(p => {
+        const matchBusca = !busca || p.protocolo.toLowerCase().includes(busca) || p.nick.toLowerCase().includes(busca);
+        const matchTurno = filtroTurno === "TODOS" || p.turnoReferencia === filtroTurno;
+        const matchStatus = filtroStatus === "TODOS" || p.statusValidacao === filtroStatus;
+        return matchBusca && matchTurno && matchStatus;
+      });
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-500">Nenhum registro encontrado para este filtro.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtrados.map(p => {
+        const urlAlbum = linksAlbuns[p.turnoReferencia] || "#";
+        const statusBadge = p.statusValidacao === "validado"
+          ? `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">Validado (${p.validadoPor || 'Chefia'})</span>`
+          : p.statusValidacao === "invalidado"
+          ? `<span class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-bold">Invalidado (${p.validadoPor || 'Chefia'})</span>`
+          : `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">Pendente</span>`;
+
+        return `
+          <tr>
+            <td class="py-3 px-2">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-amber-400">${p.protocolo}</span>
+                <button onclick="navigator.clipboard.writeText('${p.protocolo}'); window.alertaCopiaProtocolo('${p.protocolo}')" title="Copiar protocolo para pesquisar no álbum" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 rounded text-[10px]">📋</button>
+              </div>
+            </td>
+            <td class="py-3 px-2 font-bold text-white">${p.nick} <span class="block text-[10px] font-normal text-slate-400">${p.cargo}</span></td>
+            <td class="py-3 px-2">${NOMES_TURNOS[p.turnoReferencia]} <span class="block text-[10px] ${p.modalidade === 'Turno de Apoio' ? 'text-amber-400 font-bold' : 'text-slate-400'}">${p.modalidade}</span></td>
+            <td class="py-3 px-2 text-[11px]">
+              <div>🟢 ${p.inicioFormatado}</div>
+              <div>🔴 ${p.fimFormatado || 'Em aberto'}</div>
+            </td>
+            <td class="py-3 px-2 font-semibold">${formatarDuracao(p.duracaoMinutos)}</td>
+            <td class="py-3 px-2">
+              <a href="${urlAlbum}" target="_blank" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 font-semibold inline-block">
+                Abrir Álbum
+              </a>
+            </td>
+            <td class="py-3 px-2">${statusBadge}</td>
+            <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
+              <button onclick="window.validarPonto('${p.id}', 'validado')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold">✅ Validar</button>
+              <button onclick="window.validarPonto('${p.id}', 'invalidado')" class="px-2.5 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold">❌ Invalidar</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    };
+
+    window.alertaCopiaProtocolo = (cod) => {
+      mostrarAlerta(`Protocolo ${cod} copiado! Cole na lupa do álbum do Google Fotos para achar os 2 prints.`, "info");
+    };
+
+    window.validarPonto = async (idPonto, novoStatus) => {
+      if (!perfilAtual) return;
+      try {
+        await updateDoc(doc(db, "pontos", idPonto), {
+          statusValidacao: novoStatus,
+          validadoPor: perfilAtual.nick
+        });
+        mostrarAlerta(`Ponto marcado como ${novoStatus.toUpperCase()}!`, "sucesso");
+      } catch (err) {
+        mostrarAlerta("Erro ao validar ponto: " + err.message, "erro");
+      }
+    };
+
+    // RENDERIZAR GESTÃO DE EFETIVO
+    function renderizarEfetivo() {
+      const tbody = document.getElementById("tabela-efetivo");
+      if (!tbody) return;
+
+      const ordenados = [...todosUsuarios].sort((a, b) => {
+        if (a.status === "pendente" && b.status !== "pendente") return -1;
+        if (a.status !== "pendente" && b.status === "pendente") return 1;
+        return a.nick.localeCompare(b.nick);
+      });
+
+      tbody.innerHTML = ordenados.map(u => {
+        const cargos = ["Guarda Municipal", "Agente de Polícia", "Escrivão de Polícia", "Delegado", "Comandante Geral"];
+        const turnos = [
+          { val: "08-12", label: "08h às 12h" },
+          { val: "13-16", label: "13h às 16h" },
+          { val: "16-20", label: "16h às 20h" },
+          { val: "20-00", label: "20h às 00h" },
+          { val: "LIVRE", label: "Livre (Todos os Turnos)" }
+        ];
+
+        return `
+          <tr>
+            <td class="py-3 px-2 font-bold text-white">${u.nick}</td>
+            <td class="py-3 px-2 text-slate-400">${u.email}</td>
+            <td class="py-3 px-2">
+              <select id="cargo-${u.uid}" onchange="window.salvarEdicaoPolicial('${u.uid}')" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
+                ${cargos.map(c => `<option value="${c}" ${u.cargo === c ? 'selected' : ''}>${c}</option>`).join("")}
+              </select>
+            </td>
+            <td class="py-3 px-2">
+              <select id="turno-${u.uid}" onchange="window.salvarEdicaoPolicial('${u.uid}')" ${u.cargo === 'Comandante Geral' ? 'disabled' : ''} class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
+                ${turnos.map(t => `<option value="${t.val}" ${u.turnoFixo === t.val ? 'selected' : ''}>${t.label}</option>`).join("")}
+              </select>
+            </td>
+            <td class="py-3 px-2">
+              ${u.status === "aprovado"
+                ? `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">Autorizado</span>`
+                : `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Aguardando Aprovação</span>`}
+            </td>
+            <td class="py-3 px-2 text-right space-x-1">
+              ${u.status !== "aprovado"
+                ? `<button onclick="window.alterarStatusConta('${u.uid}', 'aprovado')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold">Aprovar</button>`
+                : `<button onclick="window.alterarStatusConta('${u.uid}', 'pendente')" class="px-2.5 py-1 rounded bg-red-600/30 hover:bg-red-600/50 text-red-200 font-semibold">Bloquear</button>`}
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    window.salvarEdicaoPolicial = async (uid) => {
+      const novoCargo = document.getElementById(`cargo-${uid}`).value;
+      let novoTurno = document.getElementById(`turno-${uid}`).value;
+      if (novoCargo === "Comandante Geral") novoTurno = "LIVRE";
+
+      try {
+        await updateDoc(doc(db, "usuarios", uid), {
+          cargo: novoCargo,
+          turnoFixo: novoTurno
+        });
+        mostrarAlerta("Dados do policial atualizados com sucesso!", "sucesso");
+      } catch (err) {
+        mostrarAlerta("Erro ao atualizar policial: " + err.message, "erro");
+      }
+    };
+
+    window.alterarStatusConta = async (uid, status) => {
+      try {
+        await updateDoc(doc(db, "usuarios", uid), { status });
+        mostrarAlerta(`Status da conta atualizado para ${status.toUpperCase()}.`, "sucesso");
+      } catch (err) {
+        mostrarAlerta("Erro ao alterar status: " + err.message, "erro");
+      }
+    };
+
+    // RENDERIZAR RANKING DE HORAS
+    function renderizarRanking() {
+      const tbody = document.getElementById("tabela-ranking");
+      if (!tbody) return;
+
+      const mapa = {};
+      todosUsuarios.forEach(u => {
+        mapa[u.uid] = {
+          nick: u.nick,
+          cargo: u.cargo,
+          fixos: 0,
+          apoios: 0,
+          minValidados: 0,
+          minPendentes: 0
+        };
+      });
+
+      todosPontos.forEach(p => {
+        if (!mapa[p.uid] || p.statusPonto !== "fechado") return;
+        if (p.statusValidacao === "invalidado") return;
+
+        if (p.modalidade === "Turno de Apoio") mapa[p.uid].apoios++;
+        else mapa[p.uid].fixos++;
+
+        if (p.statusValidacao === "validado") {
+          mapa[p.uid].minValidados += (p.duracaoMinutos || 0);
+        } else {
+          mapa[p.uid].minPendentes += (p.duracaoMinutos || 0);
+        }
+      });
+
+      const lista = Object.values(mapa).sort((a, b) => b.minValidados - a.minValidados);
+
+      tbody.innerHTML = lista.map(item => `
+        <tr>
+          <td class="py-3 px-2 font-bold text-white">${item.nick}</td>
+          <td class="py-3 px-2 text-slate-400">${item.cargo}</td>
+          <td class="py-3 px-2">${item.fixos}</td>
+          <td class="py-3 px-2 text-amber-400 font-semibold">${item.apoios}</td>
+          <td class="py-3 px-2 text-slate-400">${formatarDuracao(item.minPendentes)}</td>
+          <td class="py-3 px-2 font-bold text-emerald-400">${formatarDuracao(item.minValidados)}</td>
+        </tr>
+      `).join("");
+    }
+
+    // SALVAR LINKS DOS ÁLBUNS
+    window.salvarLinksAlbuns = async (e) => {
+      e.preventDefault();
+      const novosLinks = {
+        "08-12": document.getElementById("input-album-08-12").value.trim(),
+        "13-16": document.getElementById("input-album-13-16").value.trim(),
+        "16-20": document.getElementById("input-album-16-20").value.trim(),
+        "20-00": document.getElementById("input-album-20-00").value.trim()
+      };
+      try {
+        await setDoc(doc(db, "config", "links"), novosLinks);
+        mostrarAlerta("Links dos álbuns atualizados para toda a corporação!", "sucesso");
+      } catch (err) {
+        mostrarAlerta("Erro ao salvar links: " + err.message, "erro");
+      }
+    };
+  </script>
+</body>
+</html>
